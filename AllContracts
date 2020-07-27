@@ -1,0 +1,143 @@
+%%%%%%%%%%%%%%%%%%%MoFA Smart Contract
+
+pragma solidity >=0.4.22 <0.7.0;
+
+contract MoFA {
+
+    address owner = 0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C;
+    bytes32 Covid19_TravelGuidelines_Hash = '0x00aaff';
+    
+
+modifier OnlyOwner(){
+    require(msg.sender == owner);
+    _;
+}
+
+//events
+    event CountryAddition(address EA, uint256 time);
+    event CountryWithdrawal(address EA, uint256 time);
+   
+   //Adds the EA of a MoH of a certian country
+    function AddCountry(address EA,uint256 time) OnlyOwner public {
+        emit CountryAddition(EA,time);
+    }
+   
+    function RevokeCountry(address EA,uint256 time) OnlyOwner public{
+        emit CountryWithdrawal(EA, time);
+    }
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%MoH Smart Contract
+pragma solidity >=0.4.22 <0.7.0;
+
+contract MoH {
+
+    address public MoFA = 0x8046085fb6806cAa9b19a4Cd7b3cd96374dD9573;
+    bytes32 public Covid19Awareness_Hash = '0x00aaff';
+    address public owner = 0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB; 
+    
+modifier OnlyOwner(){
+    require(msg.sender == owner);
+    _;
+}
+
+//events
+    event TestingCenterAddition(address EA, uint256 time);
+    event TestingCenterWithdrawal(address EA, uint256 time);
+   
+    function AddTestingCenter(address EA,uint256 time) OnlyOwner public {
+        emit TestingCenterAddition(EA,time);
+    }
+   
+    function RevokeTestingCenter(address EA,uint256 time) OnlyOwner public{
+        emit TestingCenterWithdrawal(EA, time);
+    }
+}
+
+%%%%%%%%%%%%%%%Covid19 Testing Center Smart Contract
+pragma solidity >=0.4.22 <0.7.0;
+
+contract Covid19_TestingCenter {
+
+    address public MoH = 0xc6D50D456d3f94Ba127a44dee90592274e3b1142;
+    bytes32 public Covid19TestInfo_Hash = '0x00aaff';//just for testing purposes
+    address public owner = 0x583031D1113aD414F02576BD6afaBfb302140225; //nurse etc
+    
+modifier OnlyOwner(){
+    require(msg.sender == owner);
+    _;
+}
+
+//events
+    event PatientTestResultsCompleted(bytes32 IPFShash, address PatientSC, address EA,uint256 time);
+    event PatientAnnouncement(address PatientSC, address EA,uint256 time, string info);
+    
+    
+     //Use the following argument (SHA256) for testing the IPFShash
+    //0x64EC88CA00B268E5BA1A35678A1B5316D212F4F366B2477232534A8AECA37F3C
+    //["0x64","0xEC","0x88","0xCA","0x00","0xB2","0x68","0xE5","0xBA","0x1A","0x35","0x67","0x8A","0x1B","0x53","0x16","0xD2","0x12","0xF4","0xF3","0x66","0xB2","0x47","0x72","0x32","0x53","0x4A","0x8A","0xEC","0xA3","0x7F","0x3C"]
+    
+  //passing an address in the testing should be in double quotes  "....."
+  function PublishTestResults(bytes32 IPFShash, address PatientSC, address EA,uint256 time) OnlyOwner public {
+       emit PatientTestResultsCompleted(IPFShash, PatientSC,  EA, time);
+    }
+
+   
+   function PublishUpdates(address PatientSC, address EA,uint256 time, string memory info) OnlyOwner public{
+       emit PatientAnnouncement( PatientSC,  EA, time, info);
+    }
+}
+
+%%%%%%%%%%%%%%%%%Patient Smart Contract
+pragma solidity >=0.4.22 <0.7.0;
+
+contract PatientSmartContract {
+
+    
+    address public patient = 0xdD870fA1b7C4700F2BD7f44238821C26f7392148; 
+    enum gender {male, female}
+    gender public g;
+    string public  name;
+    uint256 public DoB;
+    bytes32 public passport_IPFShash;
+    bytes32 public residency_IPFSHash;
+    bytes32 public ID_IPFSHash;
+    string public LastCountryVisitedDetails;
+    bytes32 public LastTestingCenterVisitDocs;
+    uint256 public LastCovid19TestDate;
+    
+modifier OnlyOwner(){
+    require(msg.sender == patient);
+    _;
+}
+
+//events
+    event PatientUpdatedRecord(address patient, address ScEA, uint256 time, string info);
+    event UpdatedRecordsOfficiallyAttested(address EA, address testingcenter, address ScEA, address patient, uint256 time);
+   
+
+   //constructor
+constructor() public{
+    g = gender.male;
+    name = "Sam";
+    DoB= 19970806;//YearMonthDay
+    passport_IPFShash = 'hfgaga';
+    residency_IPFSHash = 'kjfhafuahf';
+    ID_IPFSHash = 'adjahd';
+    LastCountryVisitedDetails = 'DubaiSpain2019100520191010';//FromToFromYearMonthDayToYearMonthDay
+    LastTestingCenterVisitDocs = 'kajdgd';
+    LastCovid19TestDate = 20200607; //YearMonthDay
+    
+}
+//check if this gives the smart contract address
+    function Updated(uint256 time, address ScEA, string memory info) OnlyOwner public {
+        emit PatientUpdatedRecord(msg.sender,ScEA,time,info);
+    }
+   
+   //attestation is done by the authorized testing centers only . this is verified by the BC client
+    function Attested( address testingcenter, address ScEA, uint256 time)  public{
+        emit UpdatedRecordsOfficiallyAttested(msg.sender, testingcenter, ScEA,patient,time);
+    }
+}
